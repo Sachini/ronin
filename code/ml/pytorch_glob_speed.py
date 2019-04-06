@@ -13,9 +13,6 @@ from torch.utils.data import DataLoader
 
 sys.path.append(osp.join(osp.dirname(osp.abspath(__file__)), '..'))
 from ml.data_glob_speed import *
-from ml.data_ridi import *
-from ml.data_oxiod import *
-from ml.data_utils import StridedSequenceDataset
 from ml.transformations import *
 from ml.metric import compute_absolute_trajectory_error, compute_relative_trajectory_error
 from ml.resnet1d import *
