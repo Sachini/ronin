@@ -40,7 +40,7 @@ Configurations
 
 torch.multiprocessing.set_sharing_strategy('file_system')
 _nano_to_sec = 1e09
-_input_channel, _output_channel = 6, 3
+_input_channel, _output_channel = 6, 2
 device = 'cpu'
 
 
@@ -102,9 +102,6 @@ def get_dataset(root_dir, data_list, args, **kwargs):
     dataset = SequenceToSequenceDataset(seq_type, root_dir, data_list, args.cache_path, args.step_size, args.window_size,
                                         random_shift=random_shift, transform=transforms,
                                         skip_front=skip_front, skip_end=skip_end, shuffle=shuffle, **kwargs)
-
-    global _input_channel, _output_channel
-    _input_channel, _output_channel = dataset.feature_dim, dataset.target_dim
 
     return dataset
 
@@ -438,7 +435,7 @@ def test(args, **kwargs):
                 plt.plot(ind, gv_pred[:, i])
                 plt.plot(ind, gv_gt[:, i])
                 plt.legend(['Predicted', 'Ground truth'])
-                plt.title('{}, error: {:.6f}'.format(data, losses_vel[-1]))
+                plt.title('{}, error: {:.6f}'.format(data, np.mean(vel_losses)))
             plt.tight_layout()
             if args.out_dir is not None:
                 plt.savefig(osp.join(args.out_dir, args.prefix + data + '_vg.png'))
@@ -486,7 +483,7 @@ if __name__ == '__main__':
     Run file with individual arguments or/and config file. If argument appears in both config file and args, 
     args is given precedence.
     """
-    default_config_file = osp.abspath(osp.join(osp.abspath(__file__), '../../../../config/temporal_model_config.json'))
+    default_config_file = osp.abspath(osp.join(osp.abspath(__file__), '../../../config/temporal_model_defaults.json'))
 
     import argparse
 

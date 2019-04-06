@@ -221,7 +221,7 @@ class SequenceToSequenceDataset(Dataset):
         self.ts, self.orientations, self.gt_pos, self.local_v = [], [], [], []
         for i in range(len(data_list)):
             self.features[i] = self.features[i][skip_front:-skip_end]
-            self.targets[i] = self.targets[i][skip_front:-skip_end]
+            self.targets[i] = self.targets[i][skip_front:-skip_end+1]
             self.ts.append(aux[i][skip_front:-skip_end, :1])
             self.orientations.append(aux[i][skip_front: -skip_end, 1:5])
             self.gt_pos.append(aux[i][skip_front: -skip_end, 5:8])

@@ -48,7 +48,7 @@ class HeadingSequence(GlobSpeedSequence):
 
     def get_meta(self):
         return '{}: device: {}, ori_error ({}): {:.3f}'.format(
-            self.path, self.device, self.ori_source, self.ori_error)
+            self.info['path'], self.info['device'], self.info['ori_source'], self.info['source_ori_error'])
 
 
 class HeadingDataset(Dataset):
@@ -86,7 +86,7 @@ class HeadingDataset(Dataset):
         max_norm = kwargs.get('max_velocity_norm', 3.0)
         for i in range(len(data_list)):
             self.features[i] = self.features[i][skip_front:-skip_end]
-            self.targets[i] = self.targets[i][skip_front:-skip_end]
+            self.targets[i] = self.targets[i][skip_front:-skip_end+1]
             self.velocities[i] = self.velocities[i][skip_front: -skip_end]
 
             velocity = np.linalg.norm(self.velocities[i], axis=1)  # Remove outlier ground truth data

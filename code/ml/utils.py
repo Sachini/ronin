@@ -101,8 +101,11 @@ def load_config(default_config, args, unknown_args):
             default_configs = json.load(f)
         add_missing_config(default_configs)
 
-    if args.channels is not None and type(args.channels) is str:
-        args.channels = [int(i) for i in args.channels.split(',')]
+    try:
+        if args.channels is not None and type(args.channels) is str:
+            args.channels = [int(i) for i in args.channels.split(',')]
+    except:
+        pass
 
     if 'kwargs' in config:
         kwargs = {**config['kwargs'], **kwargs}

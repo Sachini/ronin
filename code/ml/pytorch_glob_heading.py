@@ -13,7 +13,7 @@ from torch.utils.data import DataLoader
 sys.path.append(osp.join(osp.dirname(osp.abspath(__file__)), '..'))
 
 from ml.temporal_models import LSTMSeqNetwork
-from ml.data_seq2seq_heading import HeadingSequence, HeadingDataset
+from ml.data_glob_heading import HeadingSequence, HeadingDataset
 from ml.transformations import ComposeTransform, RandomHoriRotateSeq
 from ml.metric import compute_heading_error
 from algorithms.geometry import adjust_angle_arr
@@ -73,7 +73,7 @@ class HeadingNetwork(torch.nn.Module):
         # absolute angle is valid from the first moving point onwards
         condition = lambda x: x < 2 * _min_moving_speed
         stationary_mask = condition(torch.norm(velocity, dim=2)).float() * 2
-        abs_angle_err = self.angle_loss_func(heading, gt_heading, vel_mask, 1+stationary_mask)
+        abs_angle_err = self.mse_of_2dvec(heading, gt_heading, vel_mask, 1+stationary_mask)
         losses.append(abs_angle_err)
 
         if self.pre_norm:
@@ -144,7 +144,6 @@ def write_config(args, **kwargs):
 
 
 def get_dataset(root_dir, data_list, args, **kwargs):
-    assert args.feature_cf == 'global' and args.gt_cf == 'global'
     kwargs['use_ekf'] = args.use_ekf
 
     skip_front, skip_end = kwargs.get('skip_front', 1000), kwargs.get('skip_end', 1000)
@@ -166,9 +165,6 @@ def get_dataset(root_dir, data_list, args, **kwargs):
                              random_shift=random_shift, transform=transforms,
                              skip_front=skip_front, skip_end=skip_end, shuffle=shuffle, **kwargs)
 
-    global _input_channel, _output_channel
-    _input_channel, _output_channel = dataset.feature_dim, dataset.target_dim
-
     return dataset
 
 
@@ -179,8 +175,11 @@ def get_dataset_from_list(root_dir, list_path, args, **kwargs):
 
 
 def get_model(args, mode='train', **kwargs):
+    config = {}
+    if kwargs.get('dropout'):
+        config['dropout'] = kwargs.get('dropout')
     network = LSTMSeqNetwork(_input_channel, _output_channel, args.batch_size, _device, lstm_layers=args.layers, lstm_size=args.layer_size,
-                             **kwargs).to(_device)
+                             **config).to(_device)
 
     model = HeadingNetwork(network, heading_dim=2, pre_norm=kwargs.get('heading_norm', False), separate=kwargs.get('separate_loss', False),
                            get_prediction=(mode != 'train'), weight=kwargs.get('weights'))
@@ -407,18 +406,18 @@ def test(args, **kwargs):
         assert data == osp.split(seq_dataset.data_path[idx])[1]
         log_line = data
 
-        if not args.recompute and args.out_dir is not None and osp.exists(osp.join(args.out_dir, '{}_{}_heading.npy'.format(data, args.type))):
-            result = np.load(osp.join(args.out_dir, '{}_{}_heading.npy'.format(data, args.type)))
+        if not args.recompute and args.out_dir is not None and osp.exists(osp.join(args.out_dir, '{}_{}_heading.npy'.format(data, 'lstm'))):
+            result = np.load(osp.join(args.out_dir, '{}_{}_heading.npy'.format(data, 'lstm')))
             pred_heading, gt_heading = result[:, :_output_channel], result[:, -_output_channel:]
             norm_err =  0       # Cannot get normalization error
         else:
             feat, gt_heading = seq_dataset.get_test_seq(idx)
             feat = torch.Tensor(feat).to(_device)
             pred_heading, norm_err = network(feat)
-            pred_heading, norm_err = pred_heading[0].cpu().detach().numpy(), norm_err[0].cpu().detach().numpy()
+            pred_heading, norm_err = pred_heading[0].cpu().detach().numpy(), norm_err.item()
 
             if args.store_result and args.out_dir is not None and osp.isdir(args.out_dir):
-                np.save(osp.join(args.out_dir, '{}_{}_heading.npy'.format(data, args.type)), np.concatenate([pred_heading, gt_heading], axis=1))
+                np.save(osp.join(args.out_dir, '{}_{}_heading.npy'.format(data, 'lstm')), np.concatenate([pred_heading, gt_heading], axis=1))
 
         vel = seq_dataset.velocities[idx]
         gt_vel_norm = np.clip(np.linalg.norm(vel, axis=1), a_max=1, a_min=0)
@@ -485,11 +484,11 @@ def test(args, **kwargs):
                          color=p_l['c'])
             plt.axis('equal')
             plt.legend(handles=handles)
-            f.tight_layout()
+            plt.tight_layout()
             if args.out_dir is not None:
-                f.savefig(osp.join(args.out_dir, args.prefix + data + '_visual.png'))
+                plt.savefig(osp.join(args.out_dir, args.prefix + data + '_visual.png'))
             if args.show_plot:
-                f.show()
+                plt.show()
 
         plt.close('all')
 
@@ -513,7 +512,7 @@ if __name__ == '__main__':
     Run file with individual arguments or/and config file. If argument appears in both config file and args, 
     args is given precedence.
     """
-    default_config_file = osp.abspath(osp.join(osp.abspath(__file__), '../../../../config/temporal_model_defaults.json'))
+    default_config_file = osp.abspath(osp.join(osp.abspath(__file__), '../../../config/temporal_model_defaults.json'))
 
     import argparse
 
@@ -523,7 +522,6 @@ if __name__ == '__main__':
     parser.add_argument('--config', type=str, help='Configuration file [Default: {}]'.format(default_config_file),
                         default=default_config_file)
     # common
-    parser.add_argument('--type', type=str, choices=['tcn', 'lstm', 'lstm_bi', 'lstm_multi'], help='Model type')
     parser.add_argument('--data_dir', type=str, help='Directory for data files if different from list path.')
     parser.add_argument('--cache_path', type=str, default=None)
     parser.add_argument('--feature_sigma', type=float, help='Gaussian for smoothing features')
@@ -569,7 +567,7 @@ if __name__ == '__main__':
     '''
     Extra arguments
     Set True: use_scheduler, quite (no output on stdout),
-              grv_only (use only grv), priority_grv (use grv if err. is less than threshold), 
+              grv_only (use only grv)
               force_lr (force lr when a model is loaded from continue_from),
               heading_norm (normalize heading),
               separate_loss (report loss separately for logging)
