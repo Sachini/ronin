@@ -30,9 +30,9 @@ a043_3
 a044_2
 a046_2
 a047_2
-sach_bdh7
-sach_t1
-yasu_2
+a000_7
+a000_11
+a059_2
 s0_hand_mid3
 s0_hand_right2
 s0_hand_side5
