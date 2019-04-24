@@ -16,7 +16,7 @@ from model_temporal import LSTMSeqNetwork
 from data_glob_heading import HeadingSequence, HeadingDataset
 from transformations import ComposeTransform, RandomHoriRotateSeq
 from metric import compute_heading_error
-from algorithms.geometry import adjust_angle_arr
+from math_util import adjust_angle_array
 from utils import load_config
 
 torch.multiprocessing.set_sharing_strategy('file_system')
@@ -443,8 +443,8 @@ def test(args, **kwargs):
 
             plt.subplot(311)
             plt.title("Absolue Headings")
-            plt.plot(adjust_angle_arr(absolute_angle) * 180 / np.pi)
-            plt.plot(adjust_angle_arr(gt_angle) * 180 / np.pi)
+            plt.plot(adjust_angle_array(absolute_angle) * 180 / np.pi)
+            plt.plot(adjust_angle_array(gt_angle) * 180 / np.pi)
             plt.legend(['predicted', 'gt'])
 
             plt.subplot(312)
@@ -462,8 +462,8 @@ def test(args, **kwargs):
                 plt.savefig(osp.join(args.out_dir, args.prefix + data + '_angles.png'))
 
         traj = traj_from_velocity(vel)
-        predicted = adjust_angle_arr(absolute_angle)
-        gt_angle = adjust_angle_arr(gt_angle)
+        predicted = adjust_angle_array(absolute_angle)
+        gt_angle = adjust_angle_array(gt_angle)
         g_l = {'m': ':', 'c': 'g'}
         p_l = {'m': '--', 'c': 'b'}
         handles =[mpatch.Patch(color=g_l['c'], label='Ground_truth'),

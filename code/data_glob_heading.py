@@ -9,8 +9,7 @@ import quaternion
 from scipy.ndimage import gaussian_filter1d
 from torch.utils.data import Dataset
 
-sys.path.append(osp.join(osp.dirname(osp.abspath(__file__)), '..'))
-from algorithms.geometry import orientation_to_angles
+from math_util import orientation_to_angles
 from data_glob_speed import GlobSpeedSequence
 from data_utils import load_cached_sequences
 

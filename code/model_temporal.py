@@ -4,7 +4,6 @@ import os.path as osp
 import torch
 from torch.autograd import Variable
 
-sys.path.append(osp.join(osp.dirname(osp.abspath(__file__)), '..'))
 from tcn import TemporalConvNet
 
 

@@ -11,7 +11,6 @@ import torch
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch.utils.data import DataLoader
 
-sys.path.append(osp.join(osp.dirname(osp.abspath(__file__)), '..'))
 
 from model_temporal import LSTMSeqNetwork, BilinearLSTMSeqNetwork, TCNSeqNetwork
 from utils import load_config, MSEAverageMeter

@@ -1,6 +1,5 @@
 import json
 import random
-import sys
 from os import path as osp
 
 import h5py
@@ -9,8 +8,6 @@ import quaternion
 from scipy.ndimage import gaussian_filter1d
 from torch.utils.data import Dataset
 
-sys.path.append(osp.join(osp.dirname(osp.abspath(__file__)), '..'))
-from algorithms.geometry import *
 from data_utils import CompiledSequence, select_orientation_source, load_cached_sequences
 
 

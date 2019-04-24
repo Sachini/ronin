@@ -8,12 +8,9 @@ import quaternion
 import os
 import warnings
 from os import path as osp
-from torch.utils.data import Dataset
-from scipy.ndimage.filters import gaussian_filter1d
 import sys
 
-sys.path.append(osp.join(osp.dirname(osp.abspath(__file__)), '..'))
-from algorithms.imu_integration import gyro_integration
+from math_util import gyro_integration
 
 """
 We use two levels of hierarchy for flexible data loading pipeline:

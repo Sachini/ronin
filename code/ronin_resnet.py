@@ -8,7 +8,6 @@ from scipy.interpolate import interp1d
 from tensorboardX import SummaryWriter
 from torch.utils.data import DataLoader
 
-sys.path.append(osp.join(osp.dirname(osp.abspath(__file__)), '..'))
 from data_glob_speed import *
 from transformations import *
 from metric import compute_ate_rte
