@@ -11,7 +11,7 @@ from torch.utils.data import Dataset
 
 sys.path.append(osp.join(osp.dirname(osp.abspath(__file__)), '..'))
 from algorithms.geometry import *
-from ml.data_utils import CompiledSequence, select_orientation_source, load_cached_sequences
+from data_utils import CompiledSequence, select_orientation_source, load_cached_sequences
 
 
 class GlobSpeedSequence(CompiledSequence):

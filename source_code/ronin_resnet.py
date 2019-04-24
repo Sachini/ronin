@@ -1,31 +1,25 @@
-import json
 import os
 import sys
 import time
 from os import path as osp
 
 import matplotlib.pyplot as plt
-import numpy as np
-import torch
 from scipy.interpolate import interp1d
 from tensorboardX import SummaryWriter
 from torch.utils.data import DataLoader
 
 sys.path.append(osp.join(osp.dirname(osp.abspath(__file__)), '..'))
-from ml.data_glob_speed import *
-from ml.transformations import *
-from ml.metric import compute_absolute_trajectory_error, compute_relative_trajectory_error
-from ml.resnet1d import *
+from data_glob_speed import *
+from transformations import *
+from metric import compute_ate_rte
+from model_resnet1d import *
 
-_input_channel, _output_channel = 6, 3
+_input_channel, _output_channel = 6, 2
 _fc_config = {'fc_dim': 512, 'in_dim': 7, 'dropout': 0.5, 'trans_planes': 128}
 
 
 def get_model(arch):
-    if arch == 'resnet_small':
-        network = ResNet1D(_input_channel, _output_channel, BasicBlock1D, [1, 1, 1, 1],
-                           base_plane=32, output_block=FCOutputModule, kernel_size=3, **_fc_config)
-    elif arch == 'resnet18':
+    if arch == 'resnet18':
         network = ResNet1D(_input_channel, _output_channel, BasicBlock1D, [2, 2, 2, 2],
                            base_plane=64, output_block=FCOutputModule, kernel_size=3, **_fc_config)
     elif arch == 'resnet50':
@@ -54,29 +48,6 @@ def run_test(network, data_loader, device, eval_mode=True):
     targets_all = np.concatenate(targets_all, axis=0)
     preds_all = np.concatenate(preds_all, axis=0)
     return targets_all, preds_all
-
-
-def run_test_stochastic_dropout(network, data_loader, device, num_passes=20):
-    targets = []
-    preds_mean, preds_std = [], []
-
-    # Set the whole model into eval mode, while keep dropout layers as train mode.
-    network.eval()
-    [d.train() for d in network.output_block.get_dropout()]
-    for bid, batch in enumerate(data_loader):
-        feat, targ, _, _ = batch
-        pred_sample = []
-        targets.append(targ.detach().numpy())
-        for i in range(num_passes):
-            pred_sample.append(network(feat.to(device)).cpu().detach().numpy())
-        pred_sample = np.stack(pred_sample, axis=2)
-        preds_mean.append(np.mean(pred_sample, axis=2))
-        preds_std.append(np.std(pred_sample, axis=2))
-    targets = np.concatenate(targets, axis=0)
-    preds_mean = np.concatenate(preds_mean, axis=0)
-    preds_std = np.concatenate(preds_std, axis=0)
-
-    return targets, preds_mean, preds_std
 
 
 def add_summary(writer, loss, step, mode):
@@ -339,20 +310,14 @@ def test_sequence(args):
         pos_gt = seq_dataset.gt_pos[0][:, :2]
 
         traj_lens.append(np.sum(np.linalg.norm(pos_gt[1:] - pos_gt[:-1], axis=1)))
-        ate = compute_absolute_trajectory_error(pos_pred, pos_gt)
+        ate, rte = compute_ate_rte(pos_pred, pos_gt, pred_per_min)
         ate_all.append(ate)
-        pos_cum_error = np.linalg.norm(pos_pred - pos_gt, axis=1)
-
-        # For trajectories shorted than 1 min, we scale the RTE value accordingly.
-        if pos_pred.shape[0] < pred_per_min:
-            ratio = pred_per_min / pos_pred.shape[0]
-            rte = compute_relative_trajectory_error(pos_pred, pos_gt, delta=pos_pred.shape[0] - 1) * ratio
-        else:
-            rte = compute_relative_trajectory_error(pos_pred, pos_gt, delta=pred_per_min)
         rte_all.append(rte)
+        pos_cum_error = np.linalg.norm(pos_pred - pos_gt, axis=1)
 
         print('Sequence {}, loss {} / {}, ate {:.6f}, rte {:.6f}'.format(data, losses, np.mean(losses), ate, rte))
 
+        # Plot figures
         kp = preds.shape[1]
         if kp == 2:
             targ_names = ['vx', 'vy']
