@@ -4,8 +4,7 @@ import os.path as osp
 import torch
 from torch.autograd import Variable
 
-sys.path.append(osp.join(osp.dirname(osp.abspath(__file__)), '..'))
-from ml.tcn import TemporalConvNet
+from tcn import TemporalConvNet
 
 
 class LSTMSeqNetwork(torch.nn.Module):

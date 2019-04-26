@@ -1,3 +1,7 @@
+"""
+The code is based on the original ResNet implementation from torchvision.models.resnet
+"""
+
 import torch
 import torch.nn as nn
 
@@ -78,7 +82,20 @@ class Bottleneck1D(nn.Module):
 
 
 class FCOutputModule(nn.Module):
+    """
+    Fully connected output module.
+    """
     def __init__(self, in_planes, num_outputs, **kwargs):
+        """
+        Constructor for a fully connected output layer.
+
+        Args:
+          in_planes: number of planes (channels) of the layer immediately proceeding the output module.
+          num_outputs: number of output predictions.
+          fc_dim: dimension of the fully connected layer.
+          dropout: the keep probability of the dropout layer
+          trans_planes: (optional) number of planes of the transition convolutional layer.
+        """
         super(FCOutputModule, self).__init__()
         fc_dim = kwargs.get('fc_dim', 1024)
         dropout = kwargs.get('dropout', 0.5)
@@ -113,6 +130,9 @@ class FCOutputModule(nn.Module):
 
 
 class GlobAvgOutputModule(nn.Module):
+    """
+    Global average output module.
+    """
     def __init__(self, in_planes, num_outputs):
         super(GlobAvgOutputModule, self).__init__()
         self.avg = nn.AdaptiveAvgPool1d(1)
@@ -125,27 +145,6 @@ class GlobAvgOutputModule(nn.Module):
         x = self.avg()
         x = x.view(x.size(0), -1)
         return self.fc(x)
-
-
-class MultiTaskOutputModule(nn.Module):
-    def __init__(self, in_planes, num_outputs, **kwargs):
-        super(MultiTaskOutputModule, self).__init__()
-        planes = kwargs.get('res_block_planes', 512)
-        repeat = kwargs.get('res_block_repeat', 1)
-        kernel_size = kwargs.get('kernel_size', 3)
-        self.out_blocks = nn.ModuleList()
-        for i in range(num_outputs):
-            layers = []
-            if in_planes != planes:
-                layers = [nn.Conv1d(in_planes, planes, kernel_size=1, stride=2, bias=False), nn.BatchNorm1d(planes)]
-            layers += [BasicBlock1D(planes, planes, kernel_size)] * repeat
-            layers.append(FCOutputModule(planes, 1, **kwargs))
-            self.out_blocks.append(nn.Sequential(*layers))
-
-    def forward(self, x):
-        outputs = [out(x) for out in self.out_blocks]
-        outputs = torch.cat(outputs, dim=1)
-        return outputs
 
 
 class ResNet1D(nn.Module):
@@ -225,17 +224,3 @@ class ResNet1D(nn.Module):
 
     def get_num_params(self):
         return sum(p.numel() for p in self.parameters() if p.requires_grad)
-
-
-if __name__ == '__main__':
-    in_tensor = torch.rand(16, 6, 400)
-
-    layers = [1, 1, 1, 1]
-    fc_config = {'fc_dim': 1024, 'dropout': 0.5, 'in_dim': 13}
-    network = ResNet1D(6, 3, BasicBlock1D, layers, output_block=FCOutputModule, **fc_config)
-    print(network)
-    net_out = network(in_tensor)
-    print(net_out.shape)
-
-    total_params = sum(p.numel() for p in network.parameters() if p.requires_grad)
-    print('Total number of parameters: ', total_params)

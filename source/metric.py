@@ -48,6 +48,10 @@ def compute_relative_trajectory_error(est, gt, delta, max_delta=-1):
 
 
 def compute_ate_rte(est, gt, pred_per_min=12000):
+    """
+    A convenient function to compute ATE and RTE. For sequences shorter than pred_per_min, it computes end sequence
+    drift and scales the number accordingly.
+    """
     ate = compute_absolute_trajectory_error(est, gt)
     if est.shape[0] < pred_per_min:
         ratio = pred_per_min / est.shape[0]
@@ -72,17 +76,3 @@ def compute_heading_error(est, gt):
     angle = np.arccos(np.clip(dot_prod, a_min=-1, a_max=1))
 
     return mse_error, angle
-
-
-if __name__ == '__main__':
-    from os import path as osp
-    import sys
-    import time
-    sys.path.append(osp.join(osp.dirname(osp.abspath(__file__)), '..'))
-
-    t1 = np.random.random((12000, 2)) * 10
-    t2 = np.random.random(t1.shape) * 10
-
-    start_t = time.time()
-    rte2 = compute_relative_trajectory_error(t1, t2, delta=-1, max_delta=-1)
-    print('Time usage with loop: {:.3f}s'.format(time.time() - start_t))
