@@ -397,7 +397,7 @@ def test(args, **kwargs):
         pos_pred, gv_pred, _ = recon_traj_with_preds_global(seq_dataset, preds, ind=ind, type='pred', seq_id=idx)
         pos_gt, gv_gt, _ = recon_traj_with_preds_global(seq_dataset, vel, ind=ind, type='gt', seq_id=idx)
 
-        if args.store_result and args.out_dir is not None and osp.isdir(args.out_dir):
+        if args.out_dir is not None and osp.isdir(args.out_dir):
             np.save(osp.join(args.out_dir, '{}_{}.npy'.format(data, args.type)),
                     np.concatenate([pos_pred, pos_gt], axis=1))
 
