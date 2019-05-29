@@ -97,7 +97,11 @@ def get_dataset(root_dir, data_list, args, **kwargs):
         shuffle = True
     transforms = ComposeTransform(transforms)
 
-    seq_type = GlobSpeedSequence
+    if args.dataset == 'ronin':
+        seq_type = GlobSpeedSequence
+    elif args.dataset == 'ridi':
+        from data_ridi import RIDIGlobSpeedSequence
+        seq_type = RIDIGlobSpeedSequence
     dataset = SequenceToSequenceDataset(seq_type, root_dir, data_list, args.cache_path, args.step_size, args.window_size,
                                         random_shift=random_shift, transform=transforms,
                                         skip_front=skip_front, skip_end=skip_end, shuffle=shuffle, **kwargs)
@@ -476,7 +480,7 @@ if __name__ == '__main__':
     Run file with individual arguments or/and config file. If argument appears in both config file and args, 
     args is given precedence.
     """
-    default_config_file = osp.abspath(osp.join(osp.abspath(__file__), '../../../config/temporal_model_defaults.json'))
+    default_config_file = osp.abspath(osp.join(osp.abspath(__file__), '../../config/temporal_model_defaults.json'))
 
     import argparse
 
@@ -498,6 +502,7 @@ if __name__ == '__main__':
     parser.add_argument('--out_dir', type=str, default=None)
     parser.add_argument('--device', type=str, help='Cuda device (e.g:- cuda:0) or cpu')
     parser.add_argument('--use_ekf', action='store_true')
+    parser.add_argument('--dataset', type=str, choices=['ronin', 'ridi'])
     # tcn
     tcn_cmd = parser.add_argument_group('tcn', 'configuration for TCN')
     tcn_cmd.add_argument('--kernel_size', type=int)

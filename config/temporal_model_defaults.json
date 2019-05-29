@@ -12,7 +12,7 @@
   "layer_size": 100, "layers":3,
   "data_dir": "<fill>",
   "train_list": "<fill>",
-  "val_list": "<fill>",
   "test_list": "<fill>",
-  "device": "cpu"
+  "device": "cpu",
+  "dataset": "ronin"
    }
