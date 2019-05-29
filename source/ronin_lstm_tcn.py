@@ -381,7 +381,7 @@ def test(args, **kwargs):
             f.write('Seq traj_len velocity ate rte\n')
 
     losses_vel = MSEAverageMeter(2, [1], _output_channel)
-    ate_errors, rte_error = [], []
+    ate_all, rte_all = [], []
     pred_per_min = 200 * 60
 
     seq_dataset = get_dataset(root_dir, test_data_list, args, mode='test', **kwargs)
@@ -389,21 +389,13 @@ def test(args, **kwargs):
     for idx, data in enumerate(test_data_list):
         assert data == osp.split(seq_dataset.data_path[idx])[1]
 
-        if not args.recompute and args.out_dir is not None and osp.exists(osp.join(args.out_dir, '{}_{}_vel.npy'.format(data, args.type))):
-            result = np.load(osp.join(args.out_dir, '{}_{}_vel.npy'.format(data, args.type)))
-            preds, vel = result[:, :_output_channel], result[:, _output_channel:]
-        else:
-            feat, vel = seq_dataset.get_test_seq(idx)
-            feat = torch.Tensor(feat).to(device)
-            preds = np.squeeze(network(feat).cpu().detach().numpy())[-vel.shape[0]:, :_output_channel]
-            if args.store_result and args.out_dir is not None and osp.isdir(args.out_dir):
-                np.save(osp.join(args.out_dir, '{}_{}_vel.npy'.format(data, args.type)),
-                        np.concatenate([preds, vel], axis=1))
+        feat, vel = seq_dataset.get_test_seq(idx)
+        feat = torch.Tensor(feat).to(device)
+        preds = np.squeeze(network(feat).cpu().detach().numpy())[-vel.shape[0]:, :_output_channel]
 
         ind = np.arange(vel.shape[0])
         vel_losses = np.mean((vel - preds) ** 2, axis=0)
         losses_vel.add(vel, preds)
-        print('Sequence {}, Velocity loss {} / {}'.format(data, vel_losses, np.mean(vel_losses)))
 
         print('Reconstructing trajectory')
         pos_pred, gv_pred, _ = recon_traj_with_preds_global(seq_dataset, preds, ind=ind, type='pred', seq_id=idx)
@@ -413,7 +405,6 @@ def test(args, **kwargs):
             np.save(osp.join(args.out_dir, '{}_{}.npy'.format(data, args.type)),
                     np.concatenate([pos_pred, pos_gt], axis=1))
 
-        traj_len = np.sum(np.linalg.norm(pos_gt[1:, :2] - pos_gt[:-1, :2], axis=1))
         ate = compute_absolute_trajectory_error(pos_pred, pos_gt)
         if pos_pred.shape[0] < pred_per_min:
             ratio = pred_per_min / pos_pred.shape[0]
@@ -421,41 +412,44 @@ def test(args, **kwargs):
         else:
             rte = compute_relative_trajectory_error(pos_pred, pos_gt, delta=pred_per_min)
         pos_cum_error = np.linalg.norm(pos_pred - pos_gt, axis=1)
-        ate_errors.append(ate)
-        rte_error.append(rte)
+        ate_all.append(ate)
+        rte_all.append(rte)
 
-        print('ATE: {}, RTE:{}'.format(ate, rte))
+        print('Sequence {}, Velocity loss {} / {}, ATE: {}, RTE:{}'.format(data, vel_losses, np.mean(vel_losses), ate,
+                                                                           rte))
         log_line = format_string(data, np.mean(vel_losses), ate, rte)
 
         if not args.fast_test:
-            plt.figure('Global velocity', figsize=(8, 8))
-            for i in range(_output_channel):
-                plt.subplot(311 + i)
-                plt.plot(ind, gv_pred[:, i])
-                plt.plot(ind, gv_gt[:, i])
-                plt.legend(['Predicted', 'Ground truth'])
-                plt.title('{}, error: {:.6f}'.format(data, np.mean(vel_losses)))
-            plt.tight_layout()
-            if args.out_dir is not None:
-                plt.savefig(osp.join(args.out_dir, args.prefix + data + '_vg.png'))
+            kp = preds.shape[1]
+            if kp == 2:
+                targ_names = ['vx', 'vy']
+            elif kp == 3:
+                targ_names = ['vx', 'vy', 'vz']
 
-        if not args.fast_test:
-            plt.figure('Trajectory_{}'.format(data), figsize=(6, 8))
-            plt.subplot(211)
+            plt.figure('{}'.format(data), figsize=(16, 9))
+            plt.subplot2grid((kp, 2), (0, 0), rowspan=kp - 1)
             plt.plot(pos_pred[:, 0], pos_pred[:, 1])
             plt.plot(pos_gt[:, 0], pos_gt[:, 1])
+            plt.title(data)
             plt.axis('equal')
-            plt.legend(['pred', 'gt'])
-            plt.subplot(212)
-            plt.plot(ind, pos_cum_error)
-            plt.title(['{}: length: {}, ate:{:.3f}, rte{:.3f}'.format(data, traj_len, ate, rte)])
+            plt.legend(['Predicted', 'Ground truth'])
+            plt.subplot2grid((kp, 2), (kp - 1, 0))
+            plt.plot(pos_cum_error)
+            plt.legend(['ATE:{:.3f}, RTE:{:.3f}'.format(ate_all[-1], rte_all[-1])])
+            for i in range(kp):
+                plt.subplot2grid((kp, 2), (i, 1))
+                plt.plot(ind, preds[:, i])
+                plt.plot(ind, vel[:, i])
+                plt.legend(['Predicted', 'Ground truth'])
+                plt.title('{}, error: {:.6f}'.format(targ_names[i], vel_losses[i]))
             plt.tight_layout()
-
-            if args.out_dir is not None:
-                plt.savefig(osp.join(args.out_dir, args.prefix + data + '_traj.png'))
 
             if args.show_plot:
                 plt.show()
+
+            if args.out_dir is not None and osp.isdir(args.out_dir):
+                plt.savefig(osp.join(args.out_dir, '{}_{}.png'.format(data, args.type)))
+
         if args.out_dir is not None:
             with open(log_file, 'a') as f:
                 log_line += '\n'
@@ -463,11 +457,11 @@ def test(args, **kwargs):
 
         plt.close('all')
 
-    ate_errors = np.array(ate_errors)
-    rte_error = np.array(rte_error)
+    ate_all = np.array(ate_all)
+    rte_all = np.array(rte_all)
 
     measure = format_string('ATE', 'RTE', sep='\t')
-    values = format_string(np.mean(ate_errors), np.mean(rte_error), sep='\t')
+    values = format_string(np.mean(ate_all), np.mean(rte_all), sep='\t')
     print("Model: {}, list {}".format(args.model_path, osp.split(args.test_list)[1]))
     print(measure, '\n', values)
 
@@ -522,7 +516,6 @@ if __name__ == '__main__':
     train_cmd.add_argument('--continue_from', type=str, default=None)
     train_cmd.add_argument('--epochs', type=int)
     train_cmd.add_argument('--save_interval', type=int)
-
     train_cmd.add_argument('--lr', '--learning_rate', type=float)
     # test
     test_cmd = mode.add_parser('test')
@@ -531,9 +524,6 @@ if __name__ == '__main__':
     test_cmd.add_argument('--model_path', type=str, default=None)
     test_cmd.add_argument('--fast_test', action='store_true')
     test_cmd.add_argument('--show_plot', action='store_true')
-    test_cmd.add_argument('--prefix', type=str, default='', help='prefix to add when saving files.')
-    test_cmd.add_argument('--recompute', action='store_true')
-    test_cmd.add_argument('--store_result', action='store_true')
 
     '''
     Extra arguments

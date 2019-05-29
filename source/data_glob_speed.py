@@ -13,8 +13,8 @@ from data_utils import CompiledSequence, select_orientation_source, load_cached_
 
 class GlobSpeedSequence(CompiledSequence):
     """
-    The same with GlobSpeedFusedIMUSequence, except that raw angular rate and acceleration
-    (contains gravity) are used.
+    Dataset :- RoNIN
+    Features :- raw angular rate and acceleration (includes gravity).
     """
     feature_dim = 6
     target_dim = 2
