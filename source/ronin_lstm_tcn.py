@@ -23,18 +23,7 @@ Temporal models with loss functions in global coordinate frame
 Configurations
     - Model types 
         TCN - type=tcn
-        LSTM_simple - type=lstm, lstm_bilinear
-    - Data types
-        global_cf - input & prediction in global coordinate frame
-        use_ekf - use best orientation including ekf
-        augment - add data augmentation
-    - Loss functions
-        target - velocity / position
-        target coordinate frame - always global
-        single - only calculate loss for frames with full receptive field (smoother target)
-        ignore_z - ignore z-axis in global coordinate frame
-            - reduce_z - force velocity along z-axis closer to 0
-        reduce_norm - force magnitudes to be small (smoother prediction)        
+        LSTM_simple - type=lstm, lstm_bilinear        
 '''
 
 torch.multiprocessing.set_sharing_strategy('file_system')
@@ -85,9 +74,8 @@ def get_dataset(root_dir, data_list, args, **kwargs):
     skip_front, skip_end = kwargs.get('skip_front', 1000), kwargs.get('skip_end', 1000)
     input_format, output_format = [0, 3, 6], [0, _output_channel]
     mode = kwargs.get('mode', 'train')
-    kwargs['use_ekf'] = args.use_ekf
 
-    random_shift, shuffle, transforms = 0, False, []
+    random_shift, shuffle, transforms, grv_only = 0, False, [], False
 
     if mode == 'train':
         random_shift = args.step_size // 2
@@ -95,6 +83,9 @@ def get_dataset(root_dir, data_list, args, **kwargs):
         transforms.append(RandomHoriRotateSeq(input_format, output_format))
     elif mode == 'val':
         shuffle = True
+    elif mode == 'test':
+        shuffle = False
+        grv_only = True
     transforms = ComposeTransform(transforms)
 
     if args.dataset == 'ronin':
@@ -104,7 +95,8 @@ def get_dataset(root_dir, data_list, args, **kwargs):
         seq_type = RIDIGlobSpeedSequence
     dataset = SequenceToSequenceDataset(seq_type, root_dir, data_list, args.cache_path, args.step_size, args.window_size,
                                         random_shift=random_shift, transform=transforms,
-                                        skip_front=skip_front, skip_end=skip_end, shuffle=shuffle, **kwargs)
+                                        skip_front=skip_front, skip_end=skip_end, shuffle=shuffle,
+                                        grv_only=grv_only, **kwargs)
 
     return dataset
 
@@ -359,7 +351,7 @@ def test(args, **kwargs):
         raise ValueError('Either test_path or test_list must be specified.')
 
     # Load the first sequence to update the input and output size
-    _ = get_dataset(root_dir, [test_data_list[0]], args)
+    _ = get_dataset(root_dir, [test_data_list[0]], args, mode='test')
 
     if args.out_dir and not osp.exists(args.out_dir):
         os.makedirs(args.out_dir)
@@ -501,7 +493,6 @@ if __name__ == '__main__':
     parser.add_argument('--num_workers', type=int)
     parser.add_argument('--out_dir', type=str, default=None)
     parser.add_argument('--device', type=str, help='Cuda device (e.g:- cuda:0) or cpu')
-    parser.add_argument('--use_ekf', action='store_true')
     parser.add_argument('--dataset', type=str, choices=['ronin', 'ridi'])
     # tcn
     tcn_cmd = parser.add_argument_group('tcn', 'configuration for TCN')
@@ -534,7 +525,6 @@ if __name__ == '__main__':
     Extra arguments
     Set True: use_scheduler, 
               quite (no output on stdout), 
-              grv_only (use only grv or prioratize grv) 
               force_lr (force lr when a model is loaded from continue_from)
     int:    skip_front, skip_end  
     float:  dropout, 

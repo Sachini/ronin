@@ -13,7 +13,7 @@ from data_utils import CompiledSequence, select_orientation_source, load_cached_
 
 class GlobSpeedSequence(CompiledSequence):
     """
-    Dataset :- RoNIN
+    Dataset :- RoNIN (can be downloaded from http://ronin.cs.sfu.ca/)
     Features :- raw angular rate and acceleration (includes gravity).
     """
     feature_dim = 6

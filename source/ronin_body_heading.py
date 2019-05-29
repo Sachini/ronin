@@ -33,7 +33,7 @@ class HeadingNetwork(torch.nn.Module):
 
         :param network: Network model
             - input - imu features
-            - output - abs_heading, prenorm_abs
+            - output - absolute_heading, prenorm_abs
         :param pre_norm: force network to output normalized values by adding a loss
         :param separate: report errors separately with total (The #losses can be obtained from get_channels()).
                         If False, only (weighted) sum of all losses will be returned.
@@ -144,14 +144,12 @@ def write_config(args, **kwargs):
 
 
 def get_dataset(root_dir, data_list, args, **kwargs):
-    kwargs['use_ekf'] = args.use_ekf
-
     skip_front, skip_end = kwargs.get('skip_front', 1000), kwargs.get('skip_end', 1000)
     input_format = [0, 3, 6]
     output_format = [0, _output_channel]
     mode = kwargs.get('mode', 'train')
 
-    random_shift, shuffle, transforms = 0, False, []
+    random_shift, shuffle, transforms, grv_only = 0, False, [], False
 
     if mode == 'train':
         random_shift = args.step_size // 2
@@ -159,11 +157,14 @@ def get_dataset(root_dir, data_list, args, **kwargs):
         transforms.append(RandomHoriRotateSeq(input_format, output_format))
     elif mode == 'val':
         shuffle = True
+    elif mode == 'test':
+        shuffle = False
+        grv_only = True
     transforms = ComposeTransform(transforms)
 
     dataset = HeadingDataset(HeadingSequence, root_dir, data_list, args.cache_path, args.step_size, args.window_size,
                              random_shift=random_shift, transform=transforms,
-                             skip_front=skip_front, skip_end=skip_end, shuffle=shuffle, **kwargs)
+                             skip_front=skip_front, skip_end=skip_end, shuffle=shuffle, grv_only=grv_only, **kwargs)
 
     return dataset
 
@@ -406,18 +407,13 @@ def test(args, **kwargs):
         assert data == osp.split(seq_dataset.data_path[idx])[1]
         log_line = data
 
-        if not args.recompute and args.out_dir is not None and osp.exists(osp.join(args.out_dir, '{}_{}_heading.npy'.format(data, 'lstm'))):
-            result = np.load(osp.join(args.out_dir, '{}_{}_heading.npy'.format(data, 'lstm')))
-            pred_heading, gt_heading = result[:, :_output_channel], result[:, -_output_channel:]
-            norm_err =  0       # Cannot get normalization error
-        else:
-            feat, gt_heading = seq_dataset.get_test_seq(idx)
-            feat = torch.Tensor(feat).to(_device)
-            pred_heading, norm_err = network(feat)
-            pred_heading, norm_err = pred_heading[0].cpu().detach().numpy(), norm_err.item()
+        feat, gt_heading = seq_dataset.get_test_seq(idx)
+        feat = torch.Tensor(feat).to(_device)
+        pred_heading, norm_err = network(feat)
+        pred_heading, norm_err = pred_heading[0].cpu().detach().numpy(), norm_err.item()
 
-            if args.store_result and args.out_dir is not None and osp.isdir(args.out_dir):
-                np.save(osp.join(args.out_dir, '{}_{}_heading.npy'.format(data, 'lstm')), np.concatenate([pred_heading, gt_heading], axis=1))
+        if args.out_dir is not None and osp.isdir(args.out_dir):
+            np.save(osp.join(args.out_dir, '{}_{}_heading.npy'.format(data, 'lstm')), np.concatenate([pred_heading, gt_heading], axis=1))
 
         vel = seq_dataset.velocities[idx]
         gt_vel_norm = np.clip(np.linalg.norm(vel, axis=1), a_max=1, a_min=0)
@@ -459,7 +455,7 @@ def test(args, **kwargs):
             plt.tight_layout()
 
             if args.out_dir is not None:
-                plt.savefig(osp.join(args.out_dir, args.prefix + data + '_angles.png'))
+                plt.savefig(osp.join(args.out_dir, args.prefix + data + '_output.png'))
 
         traj = traj_from_velocity(vel)
         predicted = adjust_angle_array(absolute_angle)
@@ -486,7 +482,7 @@ def test(args, **kwargs):
             plt.legend(handles=handles)
             plt.tight_layout()
             if args.out_dir is not None:
-                plt.savefig(osp.join(args.out_dir, args.prefix + data + '_visual.png'))
+                plt.savefig(osp.join(args.out_dir, args.prefix + data + '_plot.png'))
             if args.show_plot:
                 plt.show()
 
@@ -512,7 +508,7 @@ if __name__ == '__main__':
     Run file with individual arguments or/and config file. If argument appears in both config file and args, 
     args is given precedence.
     """
-    default_config_file = osp.abspath(osp.join(osp.abspath(__file__), '../../../config/temporal_model_defaults.json'))
+    default_config_file = osp.abspath(osp.join(osp.abspath(__file__), '../../config/heading_model_defaults.json'))
 
     import argparse
 
@@ -533,7 +529,6 @@ if __name__ == '__main__':
     parser.add_argument('--out_dir', type=str, default=None)
     parser.add_argument('--device', type=str, help='Cuda device e.g:- cuda:0')
     parser.add_argument('--cpu', action='store_const', dest='device', const='cpu')
-    parser.add_argument('--use_ekf', action='store_true')
     # lstm
     lstm_cmd = parser.add_argument_group('lstm', 'configuration for LSTM')
     lstm_cmd.add_argument('--layers', type=int)
@@ -548,10 +543,6 @@ if __name__ == '__main__':
     train_cmd.add_argument('--continue_from', type=str, default=None)
     train_cmd.add_argument('--epochs', type=int)
     train_cmd.add_argument('--save_interval', type=int)
-
-    train_cmd.add_argument('--single', action='store_true',
-                           help='If set true, only calculate loss for frames that are affected by *history* no. of '
-                                'frames or more.')
     train_cmd.add_argument('--lr', '--learning_rate', type=float)
     # test
     test_cmd = mode.add_parser('test')
@@ -561,13 +552,10 @@ if __name__ == '__main__':
     test_cmd.add_argument('--fast_test', action='store_true')
     test_cmd.add_argument('--show_plot', action='store_true')
     test_cmd.add_argument('--prefix', type=str, default='', help='prefix to add when saving files.')
-    test_cmd.add_argument('--recompute', action='store_true')
-    test_cmd.add_argument('--store_result', action='store_true')
 
     '''
     Extra arguments
-    Set True: use_scheduler, quite (no output on stdout),
-              grv_only (use only grv)
+    Set True: use_scheduler, quite (no output on stdout)
               force_lr (force lr when a model is loaded from continue_from),
               heading_norm (normalize heading),
               separate_loss (report loss separately for logging)
