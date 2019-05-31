@@ -36,13 +36,13 @@ You can download the RoNIN dataset from our project website. Optionally, you can
         * Example testing command: ```python ronin_lstm_tcn.py test type lstm_bi --test_list <path-to-test-list> 
         --data_dir <path-to-dataset-folder> --out_dir <path-to-output-folder> --model_path <path-to-model-checkpoint>```.
 4. Heading Network
-        * run ```source/ronin_body_heading.py``` with mode (train/test). Please refer to the source code 
-        for the full list of command line arguments. Optionally you can specify a configuration file such as 
-        ```config/heading_model_defaults.json``` with the data paths.
-        * Example training command: ```python ronin_body_heading.py train --config <path-to-your-config-file> 
-        --out_dir <path-to-output-folder> --weights 1.0,0.2```.
-        * Example testing command: ```python ronin_body_heading.py test --config <path-to-your-config-file> 
-        --test_list <path-to-test-list>  --out_dir <path-to-output-folder> --model_path <path-to-model-checkpoint>```.
+    * run ```source/ronin_body_heading.py``` with mode (train/test). Please refer to the source code 
+    for the full list of command line arguments. Optionally you can specify a configuration file such as 
+    ```config/heading_model_defaults.json``` with the data paths.
+    * Example training command: ```python ronin_body_heading.py train --config <path-to-your-config-file> 
+    --out_dir <path-to-output-folder> --weights 1.0,0.2```.
+    * Example testing command: ```python ronin_body_heading.py test --config <path-to-your-config-file> 
+    --test_list <path-to-test-list>  --out_dir <path-to-output-folder> --model_path <path-to-model-checkpoint>```.
 
 ### Citation
 Please cite the following paper is you use the code:  
