@@ -1,7 +1,7 @@
 # RoNIN: Robust Neural Inertial Navigation in the Wild
 
-**Paper**: coming soon\
-**Website**: http://ronin.cs.sfu.ca/\
+**Paper**: https://arxiv.org/abs/1905.12853  
+**Website**: http://ronin.cs.sfu.ca/  
 **Demo**: https://youtu.be/JkL3O9jFYrE
 
 ---
@@ -45,4 +45,5 @@ You can download the RoNIN dataset from our project website. Optionally, you can
         --test_list <path-to-test-list>  --out_dir <path-to-output-folder> --model_path <path-to-model-checkpoint>```.
 
 ### Citation
-Please cite the following paper is you use the code: coming soon
+Please cite the following paper is you use the code:  
+[Yan, H., Herath, S. and Furukawa, Y. (2019). RoNIN: Robust Neural Inertial Navigation in the Wild: Benchmark, Evaluations, and New Methods. [online] arXiv.org. Available at: https://arxiv.org/abs/1905.12853](https://arxiv.org/abs/1905.12853)
