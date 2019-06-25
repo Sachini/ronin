@@ -10,7 +10,7 @@ import numpy as np
 import pandas
 
 sys.path.append(osp.join(osp.dirname(osp.abspath(__file__)), '..'))
-from pre_processing.gen_dataset_v2 import compute_output_time, process_data_source
+from preprocessing.gen_dataset_v2 import compute_output_time, process_data_source
 
 '''
 HDF5 data format
