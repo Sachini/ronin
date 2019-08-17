@@ -212,16 +212,14 @@ class SequenceToSequenceDataset(Dataset):
         if targ_sigma > 0:
             self.targets = [gaussian_filter1d(targ, sigma=targ_sigma, axis=0) for targ in self.targets]
 
-        skip_front = kwargs.get('skip_front', 0)
-        skip_end = kwargs.get('skip_end', 1)
         max_norm = kwargs.get('max_velocity_norm', 3.0)
         self.ts, self.orientations, self.gt_pos, self.local_v = [], [], [], []
         for i in range(len(data_list)):
-            self.features[i] = self.features[i][skip_front:-skip_end]
-            self.targets[i] = self.targets[i][skip_front:-skip_end+1]
-            self.ts.append(aux[i][skip_front:-skip_end, :1])
-            self.orientations.append(aux[i][skip_front: -skip_end, 1:5])
-            self.gt_pos.append(aux[i][skip_front: -skip_end, 5:8])
+            self.features[i] = self.features[i][:-1]
+            self.targets[i] = self.targets[i]
+            self.ts.append(aux[i][:-1, :1])
+            self.orientations.append(aux[i][:-1, 1:5])
+            self.gt_pos.append(aux[i][:-1, 5:8])
 
             velocity = np.linalg.norm(self.targets[i], axis=1)  # Remove outlier ground truth data
             bad_data = velocity > max_norm

@@ -18,7 +18,6 @@ class HeadingSequence(GlobSpeedSequence):
     target_dim = 2
     aux_dim = 2     # velocity
 
-    # Skip first frame used to get init heading
     def __init__(self, data_path=None, **kwargs):
         super().__init__(data_path, **kwargs)
 
@@ -33,7 +32,7 @@ class HeadingSequence(GlobSpeedSequence):
         with h5py.File(osp.join(data_path, 'data.hdf5')) as f:
             tango_ori = f['pose/tango_ori']
             body_ori_q = quaternion.from_float_array(tango_ori) * quaternion.from_float_array(rot_tango_to_body).conj()
-            body_heading = orientation_to_angles(body_ori_q)[start_frame:-self.w, 0]
+            body_heading = orientation_to_angles(body_ori_q)[start_frame:, 0]
         self.targets = np.stack([np.sin(body_heading), np.cos(body_heading)], axis=-1)
 
     def get_feature(self):
@@ -80,13 +79,11 @@ class HeadingDataset(Dataset):
         if targ_sigma > 0:
             self.targets = [gaussian_filter1d(targ, sigma=targ_sigma, axis=0) for targ in self.targets]
 
-        skip_front = kwargs.get('skip_front', 0)
-        skip_end = kwargs.get('skip_end', 1)
         max_norm = kwargs.get('max_velocity_norm', 3.0)
         for i in range(len(data_list)):
-            self.features[i] = self.features[i][skip_front:-skip_end]
-            self.targets[i] = self.targets[i][skip_front:-skip_end+1]
-            self.velocities[i] = self.velocities[i][skip_front: -skip_end]
+            self.features[i] = self.features[i][:-1]
+            self.targets[i] = self.targets[i]
+            self.velocities[i] = self.velocities[i]
 
             velocity = np.linalg.norm(self.velocities[i], axis=1)  # Remove outlier ground truth data
             bad_data = velocity > max_norm

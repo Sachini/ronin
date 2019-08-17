@@ -71,7 +71,6 @@ def write_config(args, **kwargs):
 
 
 def get_dataset(root_dir, data_list, args, **kwargs):
-    skip_front, skip_end = kwargs.get('skip_front', 1000), kwargs.get('skip_end', 1000)
     input_format, output_format = [0, 3, 6], [0, _output_channel]
     mode = kwargs.get('mode', 'train')
 
@@ -94,8 +93,7 @@ def get_dataset(root_dir, data_list, args, **kwargs):
         from data_ridi import RIDIGlobSpeedSequence
         seq_type = RIDIGlobSpeedSequence
     dataset = SequenceToSequenceDataset(seq_type, root_dir, data_list, args.cache_path, args.step_size, args.window_size,
-                                        random_shift=random_shift, transform=transforms,
-                                        skip_front=skip_front, skip_end=skip_end, shuffle=shuffle,
+                                        random_shift=random_shift, transform=transforms, shuffle=shuffle,
                                         grv_only=grv_only, **kwargs)
 
     return dataset
@@ -526,7 +524,6 @@ if __name__ == '__main__':
     Set True: use_scheduler, 
               quite (no output on stdout), 
               force_lr (force lr when a model is loaded from continue_from)
-    int:    skip_front, skip_end  
     float:  dropout, 
             max_ori_error (err. threshold for priority grv in degrees)
             max_velocity_norm (filter outliers in training) 
