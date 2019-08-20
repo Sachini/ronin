@@ -82,7 +82,7 @@ class HeadingDataset(Dataset):
         max_norm = kwargs.get('max_velocity_norm', 3.0)
         for i in range(len(data_list)):
             self.features[i] = self.features[i][:-1]
-            self.targets[i] = self.targets[i]
+            self.targets[i] = self.targets[i][:-1]
             self.velocities[i] = self.velocities[i]
 
             velocity = np.linalg.norm(self.velocities[i], axis=1)  # Remove outlier ground truth data

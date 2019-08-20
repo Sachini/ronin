@@ -424,7 +424,7 @@ def test(args, **kwargs):
 
         result = format_string(heading_mse[-1], heading_angles[-1])
         log_line = format_string(log_line, result, norm_err)
-        if args.out_dir is not None:
+        if log_file is not None:
             with open(log_file, 'a') as f:
                 log_line += '\n'
                 f.write(log_line)
@@ -496,7 +496,7 @@ def test(args, **kwargs):
     print("Model: {}, list {}".format(args.model_path, osp.split(args.test_list)[1]))
     print(measure, '\n', values)
 
-    if args.out_dir is not None:
+    if log_file is not None:
         with open(log_file, 'a') as f:
             f.write(measure + '\n')
             f.write(values)

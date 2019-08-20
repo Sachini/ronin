@@ -444,7 +444,7 @@ def test(args, **kwargs):
             if args.out_dir is not None and osp.isdir(args.out_dir):
                 plt.savefig(osp.join(args.out_dir, '{}_{}.png'.format(data, args.type)))
 
-        if args.out_dir is not None:
+        if log_file is not None:
             with open(log_file, 'a') as f:
                 log_line += '\n'
                 f.write(log_line)
@@ -459,7 +459,7 @@ def test(args, **kwargs):
     print("Model: {}, list {}".format(args.model_path, osp.split(args.test_list)[1]))
     print(measure, '\n', values)
 
-    if args.out_dir is not None:
+    if log_file is not None:
         with open(log_file, 'a') as f:
             f.write(measure + '\n')
             f.write(values)
