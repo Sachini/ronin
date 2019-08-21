@@ -456,7 +456,6 @@ def test(args, **kwargs):
 
     measure = format_string('ATE', 'RTE', sep='\t')
     values = format_string(np.mean(ate_all), np.mean(rte_all), sep='\t')
-    print("Model: {}, list {}".format(args.model_path, osp.split(args.test_list)[1]))
     print(measure, '\n', values)
 
     if log_file is not None:

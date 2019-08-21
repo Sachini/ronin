@@ -456,7 +456,14 @@ def test(args, **kwargs):
             if args.out_dir is not None:
                 plt.savefig(osp.join(args.out_dir, args.prefix + data + '_output.png'))
 
-        traj = traj_from_velocity(vel)
+        if args.use_trajectory_type == 'gt':
+            traj = traj_from_velocity(vel)
+        else:
+            if osp.exists(osp.join(args.out_dir, '{}_{}.npy'.format(data, args.use_trajectory_type))):
+                traj = np.load(osp.join(args.out_dir, '{}_{}.npy'.format(data, args.use_trajectory_type)))[:, :2]
+            else:
+                raise ValueError("Trajectory file {}_{}.npy is missing".format(data, args.use_trajectory_type))
+
         predicted = adjust_angle_array(absolute_angle)
         gt_angle = adjust_angle_array(gt_angle)
         g_l = {'m': ':', 'c': 'g'}
@@ -493,7 +500,6 @@ def test(args, **kwargs):
     measure = format_string("MSE", "angle_err", sep='\t')
     values = format_string(np.mean(heading_mse), np.mean(heading_angles),
                            sep='\t')
-    print("Model: {}, list {}".format(args.model_path, osp.split(args.test_list)[1]))
     print(measure, '\n', values)
 
     if log_file is not None:
@@ -551,6 +557,8 @@ if __name__ == '__main__':
     test_cmd.add_argument('--fast_test', action='store_true')
     test_cmd.add_argument('--show_plot', action='store_true')
     test_cmd.add_argument('--prefix', type=str, default='', help='prefix to add when saving files.')
+    test_cmd.add_argument('--use_trajectory_type', type=str, default='gt',
+                          help='Trajectory type to use when rendering the headings. (Default: gt). If not gt, the trajectory file is taken as <args.out_dir>/<data_name>_<use_trajectory_type>.npy with files generated in ronin_lstm_tcn.py or ronin_resnet.py')
 
     '''
     Extra arguments
