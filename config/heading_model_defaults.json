@@ -9,8 +9,5 @@
   "target_sigma": 0.0,
   "file": "heading_models",
   "layer_size": 100, "layers":3,
-  "data_dir": "<fill>",
-  "train_list": "<fill>",
-  "test_list": "<fill>",
-  "device": "cpu",
+  "device": "cpu"
 }
