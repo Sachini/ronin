@@ -17,8 +17,7 @@ You can download the RoNIN dataset from our project website. Optionally, you can
 
 ### Usage:
 1. Clone the repository.
-2. (Optional) Download the dataset from [HERE](http://ronin.cs.sfu.ca/) and the pre-trained model from [HERE]
-(coming_soon). 
+2. (Optional) Download the dataset from [HERE](https://www.dropbox.com/sh/wbfr1sl69i4npnn/AAADN9WorG3yYYnTlIK7iJWWa?dl=0) and the pre-trained model from [HERE](https://www.dropbox.com/sh/3adl8zyp2y91otf/AABIRBecKwMJotMSrWE0z2n0a?dl=0). 
 3. Position Networks 
     1. To train/test **RoNIN ResNet** model:
         * run ```source/ronin_resnet.py``` with mode argument. Please refer to the source code for the full list of command 
@@ -33,7 +32,7 @@ You can download the RoNIN dataset from our project website. Optionally, you can
          paths.
         * Example training command: ```python ronin_lstm_tcn.py train --type tcn --config <path-to-your-config-file> 
         --out_dir <path-to-output-folder> --use_scheduler```.
-        * Example testing command: ```python ronin_lstm_tcn.py test type lstm_bi --test_list <path-to-test-list> 
+        * Example testing command: ```python ronin_lstm_tcn.py test --type tcn --test_list <path-to-test-list> 
         --data_dir <path-to-dataset-folder> --out_dir <path-to-output-folder> --model_path <path-to-model-checkpoint>```.
 4. Heading Network
     * run ```source/ronin_body_heading.py``` with mode (train/test). Please refer to the source code 
