@@ -1,0 +1,13 @@
+{"batch_size": 72,
+  "epochs": 1000,
+  "save_interval": 20,
+  "step_size": 100,
+  "lr": 0.0003,
+  "num_workers": 1,
+  "window_size": 1000,
+  "feature_sigma": 0.001,
+  "target_sigma": 0.0,
+  "file": "heading_models",
+  "layer_size": 100, "layers":3,
+  "device": "cpu"
+}
