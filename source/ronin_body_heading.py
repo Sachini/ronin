@@ -12,7 +12,7 @@ from torch.utils.data import DataLoader
 
 sys.path.append(osp.join(osp.dirname(osp.abspath(__file__)), '..'))
 
-from model_temporal import BilinearLSTMSeqNetwork
+from model_temporal import LSTMSeqNetwork
 from data_glob_heading import HeadingSequence, HeadingDataset
 from transformations import ComposeTransform, RandomHoriRotateSeq
 from metric import compute_heading_error
@@ -176,7 +176,7 @@ def get_model(args, mode='train', **kwargs):
     config = {}
     if kwargs.get('dropout'):
         config['dropout'] = kwargs.get('dropout')
-    network = BilinearLSTMSeqNetwork(_input_channel, _output_channel, args.batch_size, _device, lstm_layers=args.layers, lstm_size=args.layer_size,
+    network = LSTMSeqNetwork(_input_channel, _output_channel, args.batch_size, _device, lstm_layers=args.layers, lstm_size=args.layer_size,
                              **config).to(_device)
 
     model = HeadingNetwork(network, heading_dim=2, pre_norm=kwargs.get('heading_norm', False), separate=kwargs.get('separate_loss', False),
