@@ -1,6 +1,6 @@
 # RoNIN: Robust Neural Inertial Navigation in the Wild
 
-**Paper**: https://arxiv.org/abs/1905.12853  
+**Paper**: [ICRA 2020](https://ieeexplore.ieee.org/abstract/document/9196860), [arXiv](https://arxiv.org/abs/1905.12853)  
 **Website**: http://ronin.cs.sfu.ca/  
 **Demo**: https://youtu.be/JkL3O9jFYrE
 
@@ -47,9 +47,8 @@ models<sup>1</sup> from
     * Example testing command: ```python ronin_body_heading.py test --config <path-to-your-config-file> 
     --test_list <path-to-test-list>  --out_dir <path-to-output-folder> --model_path <path-to-model-checkpoint>```.
 
-<sup>1</sup> The models are trained on the entire dataset. We will share the results from models trained on the public dataset (data lists available in 
-_lists_ folder) for fair comaprison.
+<sup>1</sup> The models are trained on the entire dataset
 
 ### Citation
-Please cite the following paper is you use the code:  
-[Yan, H., Herath, S. and Furukawa, Y. (2019). RoNIN: Robust Neural Inertial Navigation in the Wild: Benchmark, Evaluations, and New Methods. [online] arXiv.org. Available at: https://arxiv.org/abs/1905.12853](https://arxiv.org/abs/1905.12853)
+Please cite the following paper is you use the code, paper or data:  
+[Herath, S., Yan, H. and Furukawa, Y., 2020, May. RoNIN: Robust Neural Inertial Navigation in the Wild: Benchmark, Evaluations, & New Methods. In 2020 IEEE International Conference on Robotics and Automation (ICRA) (pp. 3146-3152). IEEE.](https://ieeexplore.ieee.org/abstract/document/9196860)
