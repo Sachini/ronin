@@ -6,7 +6,7 @@ from numba import jit
 from scipy.ndimage.filters import gaussian_filter1d
 
 
-@jit('f8[:,:](f4[:],f4[:, :])')
+@jit
 def change_cf(ori, vectors):
     """
     Euler-Rodrigous formula v'=v+2s(rxv)+2rx(rxv)
