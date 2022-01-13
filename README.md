@@ -13,15 +13,13 @@ tqdm, scikit-learn
 The dataset used by this project is collected using an [App for Google Tango Device](https://drive.google.com/file/d/1xJHZ_O-uDSJdESJhZ3Kpy86kWaGX9K2g/view) and an [App for any Android Device](https://drive.google.com/file/d/1BVhfKE6FEL9YRO1WQCoRPgLtVixDbHMt/view), and pre_processed to the data format specified [here](https://ronin.cs.sfu.ca/README.txt) 
 Please refer to our paper for more details on data collection.
 
-You can download the RoNIN dataset from our [project website](http://ronin.cs.sfu.ca/) or [HERE](https://www.dropbox.com/sh/wbfr1sl69i4npnn/AAADN9WorG3yYYnTlIK7iJWWa?dl=0). Unfortunately, due to security concerns we were unable to publish 50% of our dataset.
+You can download the RoNIN dataset from our [project website](http://ronin.cs.sfu.ca/) or [HERE](https://doi.org/10.20383/102.0543). Unfortunately, due to security concerns we were unable to publish 50% of our dataset.
 
 Optionally, you can write a custom dataloader (E.g: soure/data_ridi.py) to load a different dataset.
 
 ### Usage:
 1. Clone the repository.
-2. (Optional) Download the dataset from [HERE](https://www.dropbox.com/sh/wbfr1sl69i4npnn/AAADN9WorG3yYYnTlIK7iJWWa?dl=0) and the pre-trained 
-models<sup>1</sup> from 
-[HERE](https://www.dropbox.com/sh/3adl8zyp2y91otf/AABIRBecKwMJotMSrWE0z2n0a?dl=0). 
+2. (Optional) Download the dataset and the pre-trained models<sup>1</sup> from [HERE](https://doi.org/10.20383/102.0543). 
 3. Position Networks 
     1. To train/test **RoNIN ResNet** model:
         * run ```source/ronin_resnet.py``` with mode argument. Please refer to the source code for the full list of command 
